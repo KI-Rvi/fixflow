@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  MANAGER
+  TECHNICIAN
+}
+
+enum Status {
+  NEW
+  SCHEDULED
+  IN_PROGRESS
+  AWAITING_PARTS
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String
+  passwordHash  String
+  role          Role           @default(CUSTOMER)
+  technician    Technician?
+  equipment     Equipment[]
+  tickets       Ticket[]
+  notifications Notification[]
+}
+
+model Technician {
+  id           String        @id @default(uuid())
+  userId       String        @unique
+  user         User          @relation(fields: [userId], references: [id])
+  skills       String[]
+  lat          Float
+  lng          Float
+  maxOpenJobs  Int           @default(5)
+  active       Boolean       @default(true)
+  shifts       Shift[]
+  timeOff      TimeOff[]
+  tickets      Ticket[]
+  appointments Appointment[]
+}
+
+model Shift {
+  id           String     @id @default(uuid())
+  technicianId String
+  technician   Technician @relation(fields: [technicianId], references: [id])
+  dayOfWeek    Int
+  startMinute  Int
+  endMinute    Int
+
+  @@index([technicianId, dayOfWeek])
+}
+
+model TimeOff {
+  id           String     @id @default(uuid())
+  technicianId String
+  technician   Technician @relation(fields: [technicianId], references: [id])
+  startsAt     DateTime
+  endsAt       DateTime
+
+  @@index([technicianId, startsAt])
+}
+
+model Equipment {
+  id            String   @id @default(uuid())
+  ownerId       String
+  owner         User     @relation(fields: [ownerId], references: [id])
+  category      String
+  brand         String
+  modelName     String
+  serial        String   @unique
+  purchasedAt   DateTime
+  warrantyUntil DateTime
+  tickets       Ticket[]
+}
+
+model Ticket {
+  preferredStart DateTime?
+  id            String        @id @default(uuid())
+  customerId    String
+  customer      User          @relation(fields: [customerId], references: [id])
+  equipmentId   String?
+  equipment     Equipment?    @relation(fields: [equipmentId], references: [id])
+  technicianId  String?
+  technician    Technician?   @relation(fields: [technicianId], references: [id])
+  title         String
+  description   String
+  category      String
+  priority      Int           @default(2)
+  status        Status        @default(NEW)
+  address       String
+  lat           Float
+  lng           Float
+  images        String[]
+  underWarranty Boolean       @default(false)
+  aiLabel       String?
+  aiConfidence  Float?
+  aiImage       Json?
+  diagnosis     String?
+  resolution    String?
+  createdAt     DateTime      @default(now())
+  completedAt   DateTime?
+  appointment   Appointment?
+  parts         PartUsage[]
+  events        StatusEvent[]
+
+  @@index([status, createdAt])
+  @@index([technicianId, status])
+}
+
+model Appointment {
+  id           String     @id @default(uuid())
+  ticketId     String     @unique
+  ticket       Ticket     @relation(fields: [ticketId], references: [id])
+  technicianId String
+  technician   Technician @relation(fields: [technicianId], references: [id])
+  startsAt     DateTime
+  endsAt       DateTime
+
+  @@index([technicianId, startsAt])
+}
+
+model Part {
+  id       String      @id @default(uuid())
+  sku      String      @unique
+  name     String
+  stock    Int
+  unitCost Float
+  usages   PartUsage[]
+}
+
+model PartUsage {
+  id       String @id @default(uuid())
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id])
+  partId   String
+  part     Part   @relation(fields: [partId], references: [id])
+  qty      Int
+}
+
+model StatusEvent {
+  id         String   @id @default(uuid())
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id])
+  fromStatus Status?
+  toStatus   Status
+  at         DateTime @default(now())
+}
+
+model Notification {
+  id     String   @id @default(uuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id])
+  text   String
+  read   Boolean  @default(false)
+  at     DateTime @default(now())
+}
+

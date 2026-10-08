@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Archivo", system-ui, sans-serif;
+  --color-ink: #1b2733;
+  --color-ground: #e9edf0;
+  --color-line: #c5cfd6;
+  --color-steel: #4b5d6e;
+  --color-volt: #f5b800;
+  --color-ok: #17743f;
+  --color-fault: #b52f2f;
+}
+
+@layer base {
+  body { background: var(--color-ground); color: var(--color-ink); }
+  h1, h2, h3 { font-stretch: 112%; letter-spacing: -0.01em; }
+}
+
+@layer components {
+  .field { width: 100%; min-height: 2.5rem; border: 1px solid var(--color-line); border-radius: 4px; background: #fff; padding: 0.5rem 0.65rem; }
+  .field:focus-visible, .btn:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+  .btn { min-height: 2.5rem; border-radius: 4px; background: var(--color-ink); padding: 0.5rem 1rem; font-weight: 600; color: #fff; }
+  .btn:hover { background: #0f1820; }
+  .btn-volt { background: var(--color-volt); color: var(--color-ink); }
+  .btn-volt:hover { background: #dca500; }
+}
